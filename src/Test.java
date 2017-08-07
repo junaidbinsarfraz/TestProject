@@ -314,7 +314,7 @@ public class Test {
 	
 	public static Boolean isLoginSuccessful(Document document, AuthenticationForm loginForm) {
 		
-		Object loginForm = findForm(document, usernameKeys, passwordKeys, loginKeys);
+		
 		
 		if(loginForm != null) {
 			return Boolean.FALSE;
