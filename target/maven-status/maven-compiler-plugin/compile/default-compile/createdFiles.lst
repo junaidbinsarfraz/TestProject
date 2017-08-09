@@ -4,6 +4,7 @@ com\forummanagement\dao\User.class
 com\webcrawler\dao\JmeterTransControllerTbl.class
 com\forummanagement\dao\Category.class
 Test.class
+AuthenticationForm.class
 com\webcrawler\dao\RequestResponseTbl.class
 com\forummanagement\dao\Topic.class
 com\forummanagement\dao\PostHome.class

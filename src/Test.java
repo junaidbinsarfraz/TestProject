@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.cxf.transports.http.configuration.ConnectionType;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,9 +16,9 @@ import org.jsoup.select.Elements;
 
 public class Test {
 	
-	static List<String> usernameKeys = Arrays.asList("ctl00$ctl02$tbEmail", "usernmae", "email", "login", "login[username]");
+	static List<String> usernameKeys = Arrays.asList("ctl00$ctl02$tbEmail", "usernmae", "email", "login", "login[username]", "logonId");
 	
-	static List<String> passwordKeys = Arrays.asList("ctl00$ctl02$tbPassword", "password", "pass", "login[password]");
+	static List<String> passwordKeys = Arrays.asList("ctl00$ctl02$tbPassword", "password", "pass", "login[password]", "logonPassword");
 	
 	static 	List<String> loginKeys = Arrays.asList("Login", "Signin", "Sign in", "Log in");
 	
@@ -29,8 +30,16 @@ public class Test {
 	
 	public static void main(String[] args) throws IOException {
 		
+		/*try {
+			Document doc = makeRequest("https://profile.theguardian.com/signin?INTCMP=DOTCOM_HEADER_SIGNIN", 
+										"https://www.theguardian.com/uk");
+			
+			System.out.println(doc);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}*/
 		
-		Connection.Response loginForm = Jsoup.connect("https://www.rightmove.co.uk/login.html")
+		Connection.Response loginForm = Jsoup.connect("https://www.theguardian.com/uk")
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
                 .method(Connection.Method.GET)
                 .execute();
@@ -44,7 +53,7 @@ public class Test {
             nameValue.put(elem.attr("name"), elem.attr("value"));
         }
 
-        Document document = Jsoup.connect("https://www.rightmove.co.uk//login.html")
+        Document document = Jsoup.connect("https://profile.theguardian.com/signin/actions/signin")
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
                 .data("email", loginUsername)
                 .data("password", loginPassword)
@@ -429,7 +438,7 @@ public class Test {
 	
 	public static Boolean isLoginSuccessful(Document document, AuthenticationForm loginForm) {
 		
-		if(loginForm != null) {
+		if(loginForm == null) {
 			return Boolean.FALSE;
 		}
 		
@@ -448,9 +457,9 @@ public class Test {
 		return Boolean.TRUE;
 	}
 	
-	public static Document makeRequest(String loginLink, String doaminUrl) throws Exception {
-		
-		Connection.Response loginForm = Jsoup.connect("https://www.rightmove.co.uk/login.html")
+	public static Document makeRequest(String loginLink, String domainUrl) throws Exception {
+		//"https://www.rightmove.co.uk/login.html"
+		Connection.Response loginForm = Jsoup.connect(loginLink)
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
                 .method(Connection.Method.GET)
                 .execute();
@@ -459,8 +468,11 @@ public class Test {
         
         AuthenticationForm form = findAndFillForm(doc, usernameKeys, passwordKeys, loginKeys, loginUsername, loginPassword);
         
-        Document document = Jsoup.connect("https://www.rightmove.co.uk//login.html")
+        String actionUrl = beautifyActionUrl(form.getForm().attr("action"), domainUrl);
+        
+        Document document = Jsoup.connect(actionUrl)
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
+//                .method(Connection.Method.POST)
                 .data(form.getData())
                 .cookies(loginForm.cookies())
                 .post();
@@ -515,7 +527,7 @@ public class Test {
 									
 									if(loginButton.size() > 0) {
 										if(loginKey.equalsIgnoreCase(loginButton.first().attr("title")) || loginKey.equalsIgnoreCase(loginButton.first().text())
-											|| loginButton.first().html().contains(loginKey) || loginKey.equalsIgnoreCase(loginButton.first().attr("value"))) {
+											|| loginButton.first().html().toLowerCase().contains(loginKey.toLowerCase()) || loginKey.equalsIgnoreCase(loginButton.first().attr("value"))) {
 											// Login button/link exists
 											
 											Elements hiddenElems = myForm.select("input[type=hidden]");
@@ -525,12 +537,10 @@ public class Test {
 									            nameValue.put(elem.attr("name"), elem.attr("value"));
 									        }
 									        
-									        loginForm.setData(nameValue);
-									        
 									        nameValue.put(passwordElems.first().attr("name"), loginPassword);
 									        nameValue.put(usernameElems.first().attr("name"), loginUsername);
 									        
-									        if(loginButton.first().attr("name") != null || loginButton.first().attr("name") != "") {
+									        if(loginButton.first().attr("name") != null && loginButton.first().attr("name") != "") {
 									        	nameValue.put(loginButton.first().attr("name"), loginButton.first().attr("value"));
 									        }
 											
