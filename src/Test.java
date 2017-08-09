@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -30,16 +32,15 @@ public class Test {
 	
 	public static void main(String[] args) throws IOException {
 		
-		/*try {
-			Document doc = makeRequest("https://profile.theguardian.com/signin?INTCMP=DOTCOM_HEADER_SIGNIN", 
-										"https://www.theguardian.com/uk");
+		try {
+			Document doc = makeRequest("http://www.investabroadproperties.com/");
 			
 			System.out.println(doc);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}*/
+		}
 		
-		Connection.Response loginForm = Jsoup.connect("https://www.theguardian.com/uk")
+		/*Connection.Response loginForm = Jsoup.connect("https://profile.theguardian.com/signin?INTCMP=DOTCOM_HEADER_SIGNIN")
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
                 .method(Connection.Method.GET)
                 .execute();
@@ -53,15 +54,18 @@ public class Test {
             nameValue.put(elem.attr("name"), elem.attr("value"));
         }
 
-        Document document = Jsoup.connect("https://profile.theguardian.com/signin/actions/signin")
+        Document document = Jsoup.connect("https://profile.theguardian.com/actions/signin")
+//        		.header("Content-Type","application/x-www-form-urlencoded")
+//        		.header("Referer", "https://profile.theguardian.com/signin?INTCMP=DOTCOM_HEADER_SIGNIN")
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
                 .data("email", loginUsername)
                 .data("password", loginPassword)
+//                .data("signin", "Sign in")
                 .data(nameValue)
                 .cookies(loginForm.cookies())
                 .post();
         
-        System.out.println(document);
+        System.out.println(document);*/
         
         
 		/*Connection.Response loginForm = Jsoup.connect("http://www.investabroadproperties.com/")
@@ -457,8 +461,7 @@ public class Test {
 		return Boolean.TRUE;
 	}
 	
-	public static Document makeRequest(String loginLink, String domainUrl) throws Exception {
-		//"https://www.rightmove.co.uk/login.html"
+	public static Document makeRequest(String loginLink) throws Exception {
 		Connection.Response loginForm = Jsoup.connect(loginLink)
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
                 .method(Connection.Method.GET)
@@ -468,11 +471,12 @@ public class Test {
         
         AuthenticationForm form = findAndFillForm(doc, usernameKeys, passwordKeys, loginKeys, loginUsername, loginPassword);
         
-        String actionUrl = beautifyActionUrl(form.getForm().attr("action"), domainUrl);
+        String actionUrl = beautifyActionUrl(form.getForm().attr("action"), loginLink);
         
         Document document = Jsoup.connect(actionUrl)
+//        		.header("Content-Type","application/x-www-form-urlencoded")
+//        		.header("Referer", loginLink)
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
-//                .method(Connection.Method.POST)
                 .data(form.getData())
                 .cookies(loginForm.cookies())
                 .post();
@@ -486,9 +490,19 @@ public class Test {
 		return null;
 	}
 	
-	public static String beautifyActionUrl(String actionUrl, String domainUrl) {
+	public static String beautifyActionUrl(String actionUrl, String loginUrl) {
 		if(actionUrl.startsWith("http://") || actionUrl.startsWith("https://")) {
 			return actionUrl;
+		}
+		
+		String domainUrl = loginUrl;
+		
+		try {
+			domainUrl = getDomainName(loginUrl);
+			
+			domainUrl = loginUrl.startsWith("https://") ? "https://" + domainUrl : "http://" + domainUrl;
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
 		}
 		
 		if(actionUrl.equals("/") || actionUrl.equals("./")) {
@@ -496,7 +510,21 @@ public class Test {
 		}
 		
 		
-		return (domainUrl + actionUrl);//.replace("/([^:]\\/)\\/+/g", "$1");
+		return (domainUrl + actionUrl);
+	}
+	
+	/**
+	 * The method getDomainName() is use to extract domain name from the url
+	 * 
+	 * @param url
+	 *            given url
+	 * @return domain
+	 * @throws URISyntaxException
+	 */
+	public static String getDomainName(String url) throws URISyntaxException {
+		URI uri = new URI(url);
+		String domain = uri.getHost();
+		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
 	
 	public static AuthenticationForm findAndFillForm(Document document, List<String> usernameKeys, List<String> passwordKeys, List<String> loginKeys, String username, String password) {
