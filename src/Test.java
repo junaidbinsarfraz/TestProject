@@ -447,7 +447,7 @@ public class Test {
 		
 		// Locate authentication form
 		Object form = null;
-		form = findAndFillForm(document, usernameKeys, passwordKeys, loginKeys, loginUsername, loginPassword);
+		form = findAndFillForm(document);
 		if(form != null) {
 			return Boolean.FALSE;
 		}
@@ -468,23 +468,26 @@ public class Test {
 
         Document doc = loginForm.parse();
         
-        AuthenticationForm form = findAndFillForm(doc, usernameKeys, passwordKeys, loginKeys, loginUsername, loginPassword);
+        AuthenticationForm form = findAndFillForm(doc);
         
-        String actionUrl = beautifyActionUrl(form.getForm().attr("action"), loginLink);
+        if(form != null) {
         
-        Document document = Jsoup.connect(actionUrl)
-//        		.header("Content-Type","application/x-www-form-urlencoded")
-        		.header("Referer", loginLink)
-                .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
-                .data(form.getData())
-                .cookies(loginForm.cookies())
-                .post();
-        
-        Boolean isSuccessful = isLoginSuccessful(document, form);
-        
-        if(isSuccessful) {
-        	return document;
-        }
+	        String actionUrl = beautifyActionUrl(form.getForm().attr("action"), loginLink);
+	        
+	        Document document = Jsoup.connect(actionUrl)
+	//        		.header("Content-Type","application/x-www-form-urlencoded")
+	        		.header("Referer", loginLink)
+	                .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
+	                .data(form.getData())
+	                .cookies(loginForm.cookies())
+	                .post();
+	        
+	        Boolean isSuccessful = isLoginSuccessful(document, form);
+	        
+	        if(isSuccessful) {
+	        	return document;
+	        }
+		}
 		
 		return null;
 	}
@@ -526,7 +529,7 @@ public class Test {
 		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
 	
-	public static AuthenticationForm findAndFillForm(Document document, List<String> usernameKeys, List<String> passwordKeys, List<String> loginKeys, String username, String password) {
+	public static AuthenticationForm findAndFillForm(Document document) {
 		
 		AuthenticationForm loginForm = null;
 		
