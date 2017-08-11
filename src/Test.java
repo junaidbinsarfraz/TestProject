@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,15 +31,56 @@ public class Test {
 	
 	static String loginPassword = "#Unst0n3#";
 	
-	public static void main(String[] args) throws IOException {
+	public static Boolean isFileExists(String filePath) {
+		File f = new File(filePath);
+		
+		return (f.exists() && !f.isDirectory());
+	}
+	
+	public static Map<String, String> extractUsernamePassword(String filePath) {
+		Map<String, String> usernamePassword = new HashMap<>();
+		
+		if(Boolean.FALSE.equals(isFileExists(filePath))) {
+			return null;
+		}
+		
+		File file = new File(filePath);
 		
 		try {
+			
+			List<String> lines = FileUtils.readLines(file);
+			
+			if(lines == null || lines.isEmpty()) {
+				return null;
+			}
+			
+			if(lines.size() > 1) {
+				return null;
+			}
+			
+			String[] splitedStr = lines.get(0).split("/");
+			
+			usernamePassword.put("username", splitedStr[0]);
+			usernamePassword.put("password", splitedStr[1]);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return usernamePassword;
+	}
+	
+	public static void main(String[] args) throws IOException, URISyntaxException {
+		
+		System.out.println(getDomainName("http://www.investabroadproperties.com/"));
+		
+		/*try {
 			Document doc = makeRequest("https://www.allsole.com/login.jsp?returnTo=https%3A%2F%2Fwww.allsole.com%2FaccountHome.account");
 			
 			System.out.println(doc);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		/*Connection.Response loginForm = Jsoup.connect("https://profile.theguardian.com/signin?INTCMP=DOTCOM_HEADER_SIGNIN")
                 .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1")
